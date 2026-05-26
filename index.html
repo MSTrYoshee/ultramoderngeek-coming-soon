@@ -1,0 +1,134 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>UltraModernGeek | Coming Soon</title>
+  <meta name="description" content="UltraModernGeek is coming soon. AI-assisted character design, DAZ 3D workflows, digital art, tutorials, and futuristic geek culture." />
+
+  <style>
+    :root {
+      --bg: #050714;
+      --card: rgba(255, 255, 255, 0.08);
+      --text: #f6f7ff;
+      --muted: #aab1c8;
+      --cyan: #00eaff;
+      --purple: #8b5cf6;
+      --pink: #ff3df2;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(0, 234, 255, 0.25), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(139, 92, 246, 0.25), transparent 35%),
+        linear-gradient(135deg, #050714, #090b20 50%, #03040a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 850px;
+      text-align: center;
+      padding: 54px 28px;
+      border-radius: 30px;
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(16px);
+    }
+
+    .badge {
+      display: inline-block;
+      margin-bottom: 24px;
+      padding: 9px 15px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 234, 255, 0.45);
+      color: var(--cyan);
+      font-size: 13px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(42px, 8vw, 82px);
+      line-height: 0.95;
+      letter-spacing: -0.07em;
+    }
+
+    h1 span {
+      background: linear-gradient(90deg, var(--cyan), var(--purple), var(--pink));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    p {
+      max-width: 660px;
+      margin: 26px auto 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.65;
+    }
+
+    .pill-row {
+      margin-top: 34px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .pill {
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 14px;
+    }
+
+    .footer {
+      margin-top: 42px;
+      color: rgba(255, 255, 255, 0.45);
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="wrap">
+    <div class="badge">Coming Soon</div>
+
+    <h1>UltraModern<span>Geek</span></h1>
+
+    <p>
+      AI-assisted character design, DAZ 3D workflows, digital art experiments,
+      futuristic tech tutorials, and creative tools for modern geeks.
+    </p>
+
+    <div class="pill-row">
+      <div class="pill">DAZ 3D</div>
+      <div class="pill">AI Art</div>
+      <div class="pill">Character Design</div>
+      <div class="pill">Tech Tutorials</div>
+    </div>
+
+    <div class="footer">
+      © 2026 UltraModernGeek.com
+    </div>
+  </main>
+</body>
+</html>
