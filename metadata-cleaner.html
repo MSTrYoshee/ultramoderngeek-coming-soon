@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Photo Privacy Cleaner — Ultra Modern Geek</title>
+<style>
+  :root{
+    --bg:#050714;
+    --bg-alt:#090b20;
+    --card:rgba(255,255,255,0.08);
+    --card-border:rgba(255,255,255,0.14);
+    --text:#f6f7ff;
+    --text-dim:#aab1c8;
+    --cyan:#00eaff;
+    --purple:#8b5cf6;
+    --pink:#ff3df2;
+    --accent:var(--cyan);
+    --accent-dim:rgba(0,234,255,0.45);
+    --danger:#ff3df2;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    --sans: Arial, Helvetica, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at top left, rgba(0,234,255,0.25), transparent 35%),
+      radial-gradient(circle at bottom right, rgba(139,92,246,0.25), transparent 35%),
+      linear-gradient(135deg, #050714, #090b20 50%, #03040a);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    line-height:1.5;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:48px 20px 80px;}
+
+  header.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:40px;flex-wrap:wrap;gap:12px;}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-weight:700;letter-spacing:0.5px;}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);}
+  .brand small{display:block;font-family:var(--sans);font-weight:400;color:var(--text-dim);font-size:12px;letter-spacing:0.3px;}
+  .badge{font-size:11px;color:var(--cyan);border:1px solid var(--accent-dim);padding:6px 12px;border-radius:999px;background:rgba(0,234,255,0.06);text-transform:uppercase;letter-spacing:0.12em;}
+
+  h1{font-size:clamp(28px,4vw,40px);margin:0 0 12px;letter-spacing:-0.03em;}
+  h1 span{
+    background:linear-gradient(90deg, var(--cyan), var(--purple), var(--pink));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  p.lede{color:var(--text-dim);max-width:640px;margin:0 0 32px;font-size:15px;}
+
+  .dropzone{
+    border:2px dashed var(--card-border);
+    border-radius:24px;
+    background:var(--card);
+    backdrop-filter:blur(16px);
+    padding:48px 24px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .dropzone:hover, .dropzone.drag{
+    border-color:var(--cyan);
+    background:rgba(0,234,255,0.05);
+  }
+  .dropzone .icon{font-size:34px;margin-bottom:10px;}
+  .dropzone .main{font-weight:600;font-size:15px;}
+  .dropzone .sub{color:var(--text-dim);font-size:13px;margin-top:6px;}
+  input[type=file]{display:none;}
+
+  .trust{
+    display:flex;gap:10px;align-items:flex-start;
+    margin-top:16px;padding:12px 14px;
+    border:1px solid var(--card-border);border-radius:14px;
+    background:rgba(255,255,255,0.04);color:var(--text-dim);font-size:12.5px;
+  }
+  .trust .icon{color:var(--cyan);flex-shrink:0;}
+
+  .results{margin-top:36px;display:flex;flex-direction:column;gap:16px;}
+  .file-card{
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    background:var(--card);
+    backdrop-filter:blur(16px);
+    padding:18px;
+    display:grid;
+    grid-template-columns:88px 1fr;
+    gap:16px;
+  }
+  .file-card img{width:88px;height:88px;object-fit:cover;border-radius:10px;background:#000;display:block;}
+  .file-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;}
+  .file-name{font-weight:600;font-size:14px;word-break:break-all;}
+  .file-size{color:var(--text-dim);font-size:12px;font-family:var(--mono);}
+
+  .status{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+  .status.working{color:#ffd166;border:1px solid #6b5620;background:rgba(255,209,102,0.08);}
+  .status.done{color:var(--cyan);border:1px solid var(--accent-dim);background:rgba(0,234,255,0.08);}
+
+  table.meta{width:100%;border-collapse:collapse;margin-top:12px;font-size:12.5px;}
+  table.meta td{padding:5px 8px;border-bottom:1px solid var(--card-border);vertical-align:top;}
+  table.meta td.k{color:var(--text-dim);width:150px;font-family:var(--mono);}
+  table.meta td.v{font-family:var(--mono);word-break:break-all;}
+  .none-found{color:var(--text-dim);font-size:12.5px;margin-top:10px;}
+  .flagged{color:var(--danger);}
+
+  .actions{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;}
+  .dl{
+    display:inline-block;text-decoration:none;
+    font-family:var(--sans);font-size:13px;font-weight:700;
+    background:linear-gradient(90deg, var(--cyan), var(--purple));
+    color:#03040a;border:none;border-radius:999px;
+    padding:10px 18px;cursor:pointer;
+  }
+  .dl:disabled{opacity:0.4;cursor:not-allowed;}
+  .dl.secondary{background:transparent;color:var(--text);border:1px solid var(--card-border);}
+
+  footer{margin-top:56px;color:var(--text-dim);font-size:14px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <a href="/" class="brand" style="text-decoration:none;color:inherit;">
+      <span class="dot"></span>
+      <div>
+        UltraModernGeek
+        <small>tools</small>
+      </div>
+    </a>
+    <span class="badge">Runs 100% in your browser</span>
+  </header>
+
+  <h1>Photo <span>Privacy</span> Cleaner</h1>
+  <p class="lede">
+    Photos carry hidden EXIF data — GPS coordinates, camera/phone model, timestamps, even the software
+    that edited them. This strips all of it and hands you a clean copy before you post it anywhere.
+    Nothing is uploaded: the cleaning happens entirely on your device.
+  </p>
+
+  <div class="dropzone" id="dropzone">
+    <div class="icon">📷</div>
+    <div class="main">Drop images here, or click to choose files</div>
+    <div class="sub">JPG or PNG · multiple files supported</div>
+    <input type="file" id="fileInput" accept="image/jpeg,image/png" multiple>
+  </div>
+
+  <div class="trust">
+    <span class="icon">🔒</span>
+    <span>Your images are processed locally in this browser tab using the Canvas API. They are never sent to a server.</span>
+  </div>
+
+  <div class="results" id="results"></div>
+
+  <footer>© 2026 UltraModernGeek.com</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const results = document.getElementById('results');
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('drag');
+    handleFiles(e.dataTransfer.files);
+  });
+  fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+
+  function handleFiles(fileList){
+    Array.from(fileList).forEach(file => {
+      if (!/^image\/(jpeg|png)$/.test(file.type)) return;
+      processFile(file);
+    });
+    fileInput.value = '';
+  }
+
+  function bytesToSize(bytes){
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+    return (bytes/(1024*1024)).toFixed(2) + ' MB';
+  }
+
+  // ---------- Minimal EXIF reader (JPEG only) ----------
+  function readExif(arrayBuffer){
+    const view = new DataView(arrayBuffer);
+    if (view.byteLength < 4 || view.getUint16(0) !== 0xFFD8) return null; // not a JPEG
+
+    let offset = 2;
+    let app1 = null;
+    while (offset < view.byteLength - 1){
+      const marker = view.getUint16(offset);
+      if (marker === 0xFFE1){
+        app1 = offset;
+        break;
+      }
+      if ((marker & 0xFF00) !== 0xFF00) break; // corrupt
+      if (marker === 0xFFDA) break; // start of scan, no more markers
+      const size = view.getUint16(offset + 2);
+      offset += 2 + size;
+    }
+    if (app1 === null) return null;
+
+    const segLength = view.getUint16(app1 + 2);
+    const segStart = app1 + 4;
+    // "Exif\0\0"
+    if (view.getUint32(segStart) !== 0x45786966) return null;
+    const tiffStart = segStart + 6;
+    if (tiffStart + 8 > view.byteLength) return null;
+
+    const byteOrder = view.getUint16(tiffStart);
+    const little = byteOrder === 0x4949; // 'II'
+    if (!little && byteOrder !== 0x4D4D) return null; // must be 'II' or 'MM'
+
+    const g16 = o => view.getUint16(o, little);
+    const g32 = o => view.getUint32(o, little);
+
+    const ifd0Offset = tiffStart + g32(tiffStart + 4);
+
+    function readIFD(ifdOffset){
+      const tags = {};
+      if (ifdOffset <= 0 || tiffStart + ifdOffset >= view.byteLength) return { tags, next: 0 };
+      const abs = tiffStart + ifdOffset;
+      const count = g16(abs);
+      for (let i = 0; i < count; i++){
+        const entryOffset = abs + 2 + i * 12;
+        if (entryOffset + 12 > view.byteLength) break;
+        const tag = g16(entryOffset);
+        const type = g16(entryOffset + 2);
+        const numValues = g32(entryOffset + 4);
+        const typeSizes = {1:1,2:1,3:2,4:4,5:8,6:1,7:1,8:2,9:4,10:8};
+        const typeSize = typeSizes[type] || 1;
+        const totalSize = typeSize * numValues;
+        const valueOffset = totalSize <= 4 ? entryOffset + 8 : tiffStart + g32(entryOffset + 8);
+
+        let value = null;
+        try {
+          if (type === 2){ // ASCII
+            let str = '';
+            for (let b = 0; b < numValues - 1; b++){
+              const c = view.getUint8(valueOffset + b);
+              if (c === 0) break;
+              str += String.fromCharCode(c);
+            }
+            value = str.trim();
+          } else if (type === 3){ // SHORT
+            value = numValues === 1 ? g16(valueOffset) : Array.from({length:numValues}, (_,k)=>g16(valueOffset+k*2));
+          } else if (type === 4){ // LONG
+            value = numValues === 1 ? g32(valueOffset) : Array.from({length:numValues}, (_,k)=>g32(valueOffset+k*4));
+          } else if (type === 5){ // RATIONAL
+            const readRational = o => g32(o) / (g32(o+4) || 1);
+            value = numValues === 1 ? readRational(valueOffset) : Array.from({length:numValues}, (_,k)=>readRational(valueOffset+k*8));
+          } else if (type === 10){ // SRATIONAL
+            const readSRational = o => view.getInt32(o, little) / (view.getInt32(o+4, little) || 1);
+            value = numValues === 1 ? readSRational(valueOffset) : Array.from({length:numValues}, (_,k)=>readSRational(valueOffset+k*8));
+          }
+        } catch(e){ value = null; }
+
+        tags[tag] = value;
+      }
+      const nextOffset = g32(abs + 2 + count * 12);
+      return { tags, next: nextOffset };
+    }
+
+    const ifd0 = readIFD(ifd0Offset).tags;
+
+    let exifTags = {};
+    if (ifd0[0x8769]) exifTags = readIFD(ifd0[0x8769]).tags;
+
+    let gpsTags = {};
+    if (ifd0[0x8825]) gpsTags = readIFD(ifd0[0x8825]).tags;
+
+    function dmsToDecimal(dms, ref){
+      if (!Array.isArray(dms) || dms.length < 3) return null;
+      let dec = dms[0] + dms[1]/60 + dms[2]/3600;
+      if (ref === 'S' || ref === 'W') dec = -dec;
+      return dec;
+    }
+
+    const out = {
+      Make: ifd0[0x010F] || null,
+      Model: ifd0[0x0110] || null,
+      Software: ifd0[0x0131] || null,
+      DateTime: ifd0[0x0132] || exifTags[0x9003] || null,
+      Orientation: typeof ifd0[0x0112] === 'number' ? ifd0[0x0112] : 1,
+      GPSLatitude: gpsTags[0x0002] ? dmsToDecimal(gpsTags[0x0002], gpsTags[0x0001]) : null,
+      GPSLongitude: gpsTags[0x0004] ? dmsToDecimal(gpsTags[0x0004], gpsTags[0x0003]) : null,
+    };
+    return out;
+  }
+
+  function buildMetaRows(exif){
+    if (!exif) return [];
+    const rows = [];
+    if (exif.Make || exif.Model) rows.push(['Camera / device', [exif.Make, exif.Model].filter(Boolean).join(' ')]);
+    if (exif.DateTime) rows.push(['Date taken', exif.DateTime]);
+    if (exif.Software) rows.push(['Editing software', exif.Software]);
+    if (exif.GPSLatitude != null && exif.GPSLongitude != null){
+      rows.push(['GPS location', exif.GPSLatitude.toFixed(6) + ', ' + exif.GPSLongitude.toFixed(6), true]);
+    }
+    if (exif.Orientation && exif.Orientation !== 1) rows.push(['Orientation flag', String(exif.Orientation)]);
+    return rows;
+  }
+
+  // Orientation-aware canvas draw so pixels are correct even though
+  // the cleaned file will carry no EXIF orientation tag at all.
+  function drawOriented(ctx, img, orientation, w, h){
+    switch(orientation){
+      case 2: ctx.transform(-1,0,0,1,w,0); break;
+      case 3: ctx.transform(-1,0,0,-1,w,h); break;
+      case 4: ctx.transform(1,0,0,-1,0,h); break;
+      case 5: ctx.transform(0,1,1,0,0,0); break;
+      case 6: ctx.transform(0,1,-1,0,h,0); break;
+      case 7: ctx.transform(0,-1,-1,0,h,w); break;
+      case 8: ctx.transform(0,-1,1,0,0,w); break;
+      default: break;
+    }
+    ctx.drawImage(img, 0, 0);
+  }
+
+  function cleanImage(file, orientation){
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const swap = orientation >= 5 && orientation <= 8;
+        const w = swap ? img.naturalHeight : img.naturalWidth;
+        const h = swap ? img.naturalWidth : img.naturalHeight;
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        drawOriented(ctx, img, orientation, w, h);
+        URL.revokeObjectURL(url);
+        const mime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+        canvas.toBlob(blob => {
+          if (!blob) return reject(new Error('Could not encode cleaned image'));
+          resolve(blob);
+        }, mime, 0.92);
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+  async function processFile(file){
+    const card = document.createElement('div');
+    card.className = 'file-card';
+
+    const thumbUrl = URL.createObjectURL(file);
+    card.innerHTML = `
+      <img src="${thumbUrl}" alt="">
+      <div>
+        <div class="file-head">
+          <div>
+            <div class="file-name">${escapeHtml(file.name)}</div>
+            <div class="file-size">${bytesToSize(file.size)}</div>
+          </div>
+          <span class="status working">cleaning…</span>
+        </div>
+        <div class="meta-slot"></div>
+        <div class="actions"></div>
+      </div>
+    `;
+    results.prepend(card);
+
+    const statusEl = card.querySelector('.status');
+    const metaSlot = card.querySelector('.meta-slot');
+    const actions = card.querySelector('.actions');
+
+    try {
+      const buf = await file.arrayBuffer();
+      const exif = file.type === 'image/jpeg' ? readExif(buf) : null;
+      const rows = buildMetaRows(exif);
+
+      if (rows.length){
+        const table = document.createElement('table');
+        table.className = 'meta';
+        table.innerHTML = rows.map(([k,v,flag]) =>
+          `<tr><td class="k">${escapeHtml(k)}</td><td class="v ${flag ? 'flagged':''}">${escapeHtml(String(v))}</td></tr>`
+        ).join('');
+        metaSlot.appendChild(table);
+      } else {
+        metaSlot.innerHTML = `<div class="none-found">No readable EXIF metadata found — the browser re-encode step below will still strip anything hidden.</div>`;
+      }
+
+      const orientation = exif && exif.Orientation ? exif.Orientation : 1;
+      const cleanedBlob = await cleanImage(file, orientation);
+      const cleanedUrl = URL.createObjectURL(cleanedBlob);
+      const ext = file.type === 'image/png' ? 'png' : 'jpg';
+      const baseName = file.name.replace(/\.[^.]+$/, '');
+      const cleanName = `cleaned-${baseName}.${ext}`;
+
+      statusEl.textContent = 'cleaned';
+      statusEl.className = 'status done';
+
+      const dl = document.createElement('a');
+      dl.href = cleanedUrl;
+      dl.download = cleanName;
+      dl.className = 'dl';
+      dl.textContent = `Download cleaned (${bytesToSize(cleanedBlob.size)})`;
+      actions.appendChild(dl);
+
+    } catch (err){
+      statusEl.textContent = 'error';
+      statusEl.className = 'status done';
+      statusEl.style.color = 'var(--danger)';
+      metaSlot.innerHTML = `<div class="none-found">Could not process this file: ${escapeHtml(err.message || String(err))}</div>`;
+    }
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+})();
+</script>
+</body>
+</html>
