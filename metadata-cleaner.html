@@ -138,7 +138,7 @@
 <div class="wrap">
 
   <header class="top">
-    <a href="/" class="brand" style="text-decoration:none;color:inherit;">
+    <a href="index.html" class="brand" style="text-decoration:none;color:inherit;">
       <span class="dot"></span>
       <div>
         UltraModernGeek
@@ -150,16 +150,16 @@
 
   <h1>Photo <span>Privacy</span> Cleaner</h1>
   <p class="lede">
-    Photos carry hidden EXIF data — GPS coordinates, camera/phone model, timestamps, even the software
-    that edited them. This strips all of it and hands you a clean copy before you post it anywhere.
+    Photos can carry embedded metadata — GPS coordinates, camera/phone model, timestamps, editing software, and more.
+    This tool re-encodes the image in your browser to remove embedded metadata where present before you post it anywhere.
     Nothing is uploaded: the cleaning happens entirely on your device.
   </p>
 
   <div class="dropzone" id="dropzone">
     <div class="icon">📷</div>
     <div class="main">Drop images here, or click to choose files</div>
-    <div class="sub">JPG or PNG · multiple files supported</div>
-    <input type="file" id="fileInput" accept="image/jpeg,image/png" multiple>
+    <div class="sub">JPG, PNG, or WEBP · multiple files supported</div>
+    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" multiple>
   </div>
 
   <div class="trust">
@@ -203,16 +203,41 @@
 
   function handleFiles(fileList){
     Array.from(fileList).forEach(file => {
-      if (!/^image\/(jpeg|png)$/.test(file.type)) return;
+      if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { showUnsupported(file); return; }
       processFile(file);
     });
     fileInput.value = '';
   }
 
+  function showUnsupported(file){
+    const card = document.createElement('div');
+    card.className = 'file-card';
+    card._objectUrls = [];
+    card.innerHTML = `
+      <div style="width:88px;height:88px;border-radius:10px;background:rgba(255,61,242,0.08);display:grid;place-items:center;font-size:28px;">⚠️</div>
+      <div>
+        <div class="file-head">
+          <div>
+            <div class="file-name">${escapeHtml(file.name)}</div>
+            <div class="file-size">${bytesToSize(file.size)}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="status done" style="color:var(--danger);">unsupported</span>
+            <button type="button" class="remove-btn" title="Remove">✕</button>
+          </div>
+        </div>
+        <div class="none-found">Unsupported format. Please use JPG, PNG, or WEBP.</div>
+      </div>
+    `;
+    results.prepend(card);
+    card.querySelector('.remove-btn').addEventListener('click', () => removeCard(card));
+    updateResultsBar();
+  }
+
   function updateResultsBar(){
     const n = results.children.length;
     resultsBar.classList.toggle('show', n > 0);
-    resultsCount.textContent = n + (n === 1 ? ' image cleaned' : ' images cleaned');
+    resultsCount.textContent = n + (n === 1 ? ' image in results' : ' images in results');
   }
 
   function removeCard(card){
@@ -378,7 +403,7 @@
         const ctx = canvas.getContext('2d');
         drawOriented(ctx, img, orientation, w, h);
         URL.revokeObjectURL(url);
-        const mime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+        const mime = file.type === 'image/png' ? 'image/png' : file.type === 'image/webp' ? 'image/webp' : 'image/jpeg';
         canvas.toBlob(blob => {
           if (!blob) return reject(new Error('Could not encode cleaned image'));
           resolve(blob);
@@ -435,14 +460,14 @@
         ).join('');
         metaSlot.appendChild(table);
       } else {
-        metaSlot.innerHTML = `<div class="none-found">No readable EXIF metadata found — the browser re-encode step below will still strip anything hidden.</div>`;
+        metaSlot.innerHTML = `<div class="none-found">No readable JPEG EXIF metadata found. The browser re-encode step will still remove embedded metadata from the cleaned copy.</div>`;
       }
 
       const orientation = exif && exif.Orientation ? exif.Orientation : 1;
       const cleanedBlob = await cleanImage(file, orientation);
       const cleanedUrl = URL.createObjectURL(cleanedBlob);
       card._objectUrls.push(cleanedUrl);
-      const ext = file.type === 'image/png' ? 'png' : 'jpg';
+      const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
       const baseName = file.name.replace(/\.[^.]+$/, '');
       const cleanName = `cleaned-${baseName}.${ext}`;
 

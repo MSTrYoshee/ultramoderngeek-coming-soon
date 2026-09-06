@@ -1,11 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>UltraModernGeek | Coming Soon</title>
-  <meta name="description" content="UltraModernGeek is coming soon. AI-assisted character design, DAZ 3D workflows, digital art, tutorials, and futuristic geek culture." />
+  <meta name="description" content="UltraModernGeek is coming soon with AI-assisted character design, DAZ 3D workflows, digital art, tech tutorials, and practical browser tools. Try the Photo Privacy Cleaner now." />
 
   <style>
     :root {
@@ -100,6 +100,57 @@
       font-size: 14px;
     }
 
+    .live-tool {
+      margin: 34px auto 0;
+      max-width: 680px;
+      padding: 24px 22px;
+      border-radius: 22px;
+      background: rgba(0, 234, 255, 0.045);
+      border: 1px solid rgba(0, 234, 255, 0.22);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+    .live-label {
+      display: inline-block;
+      margin-bottom: 10px;
+      color: var(--cyan);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .live-tool h2 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.03em;
+    }
+
+    .live-tool p {
+      margin: 10px auto 0;
+      font-size: 15px;
+      line-height: 1.55;
+      max-width: 560px;
+    }
+
+    .tool-btn {
+      display: inline-block;
+      margin-top: 18px;
+      padding: 11px 18px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      color: #03040a;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      transition: transform .15s ease, filter .15s ease;
+    }
+
+    .tool-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
     .footer {
       margin-top: 42px;
       color: rgba(255, 255, 255, 0.45);
@@ -116,7 +167,7 @@
 
     <p>
       AI-assisted character design, DAZ 3D workflows, digital art experiments,
-      futuristic tech tutorials, and creative tools for modern geeks.
+      futuristic tech tutorials, and practical tools for modern geeks.
     </p>
 
     <div class="pill-row">
@@ -125,6 +176,16 @@
       <div class="pill">Character Design</div>
       <div class="pill">Tech Tutorials</div>
     </div>
+
+    <section class="live-tool" aria-labelledby="privacy-cleaner-title">
+      <div class="live-label">Live Now</div>
+      <h2 id="privacy-cleaner-title">Photo Privacy Cleaner</h2>
+      <p>
+        Remove embedded image metadata before you share a photo.
+        The cleaning happens locally in your browser — your image is never uploaded.
+      </p>
+      <a class="tool-btn" href="metadata-cleaner.html">Open Privacy Cleaner</a>
+    </section>
 
     <div class="footer">
       © 2026 UltraModernGeek.com
