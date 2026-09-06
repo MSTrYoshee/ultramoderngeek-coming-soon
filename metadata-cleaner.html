@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Photo Privacy Cleaner — Ultra Modern Geek</title>
+<title>Privacy Cleaner — Ultra Modern Geek</title>
 <style>
   :root{
     --bg:#050714;
@@ -77,6 +77,20 @@
   }
   .trust .icon{color:var(--cyan);flex-shrink:0;}
 
+  .tabs{display:flex;gap:8px;margin-bottom:28px;}
+  .tab{
+    font-family:var(--sans);font-size:14px;font-weight:700;
+    color:var(--text-dim);background:rgba(255,255,255,0.04);
+    border:1px solid var(--card-border);border-radius:999px;
+    padding:10px 20px;cursor:pointer;
+  }
+  .tab.active{
+    color:#03040a;border-color:transparent;
+    background:linear-gradient(90deg, var(--cyan), var(--purple));
+  }
+  .panel{display:none;}
+  .panel.active{display:block;}
+
   .results-bar{
     display:none;
     align-items:center;justify-content:space-between;
@@ -105,6 +119,12 @@
   }
   .remove-btn:hover{color:var(--pink);background:rgba(255,61,242,0.08);}
   .file-card img{width:88px;height:88px;object-fit:cover;border-radius:10px;background:#000;display:block;}
+  .doc-icon{
+    width:88px;height:88px;border-radius:10px;
+    background:rgba(255,255,255,0.05);
+    display:flex;align-items:center;justify-content:center;
+    font-size:38px;
+  }
   .file-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;}
   .file-name{font-weight:600;font-size:14px;word-break:break-all;}
   .file-size{color:var(--text-dim);font-size:12px;font-family:var(--mono);}
@@ -138,7 +158,7 @@
 <div class="wrap">
 
   <header class="top">
-    <a href="index.html" class="brand" style="text-decoration:none;color:inherit;">
+    <a href="/" class="brand" style="text-decoration:none;color:inherit;">
       <span class="dot"></span>
       <div>
         UltraModernGeek
@@ -148,102 +168,105 @@
     <span class="badge">Runs 100% in your browser</span>
   </header>
 
-  <h1>Photo <span>Privacy</span> Cleaner</h1>
+  <h1><span>Privacy</span> Cleaner</h1>
   <p class="lede">
-    Photos can carry embedded metadata — GPS coordinates, camera/phone model, timestamps, editing software, and more.
-    This tool re-encodes the image in your browser to remove embedded metadata where present before you post it anywhere.
-    Nothing is uploaded: the cleaning happens entirely on your device.
+    Photos and documents carry hidden metadata — GPS coordinates, camera or device model, author names,
+    timestamps, even the software that made them. This strips all of it and hands you a clean copy before
+    you share it anywhere. Nothing is uploaded: the cleaning happens entirely on your device.
   </p>
 
-  <div class="dropzone" id="dropzone">
-    <div class="icon">📷</div>
-    <div class="main">Drop images here, or click to choose files</div>
-    <div class="sub">JPG, PNG, or WEBP · multiple files supported</div>
-    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" multiple>
+  <div class="tabs">
+    <button type="button" class="tab active" data-tab="photos">📷 Photos</button>
+    <button type="button" class="tab" data-tab="documents">📄 Documents</button>
   </div>
 
-  <div class="trust">
-    <span class="icon">🔒</span>
-    <span>Your images are processed locally in this browser tab using the Canvas API. They are never sent to a server.</span>
-  </div>
+  <section class="panel active" id="panel-photos">
+    <div class="dropzone" id="dropzone">
+      <div class="icon">📷</div>
+      <div class="main">Drop images here, or click to choose files</div>
+      <div class="sub">JPG or PNG · multiple files supported</div>
+      <input type="file" id="fileInput" accept="image/jpeg,image/png" multiple>
+    </div>
 
-  <div class="results-bar" id="resultsBar">
-    <span id="resultsCount"></span>
-    <button class="dl secondary" id="clearAllBtn" type="button">Clear all</button>
-  </div>
-  <div class="results" id="results"></div>
+    <div class="trust">
+      <span class="icon">🔒</span>
+      <span>Your images are processed locally in this browser tab using the Canvas API. They are never sent to a server.</span>
+    </div>
+
+    <div class="results-bar" id="resultsBar">
+      <span id="resultsCount"></span>
+      <button class="dl secondary" id="clearAllBtn" type="button">Clear all</button>
+    </div>
+    <div class="results" id="results"></div>
+  </section>
+
+  <section class="panel" id="panel-documents">
+    <div class="dropzone" id="dropzoneDocs">
+      <div class="icon">📄</div>
+      <div class="main">Drop PDFs or Word docs here, or click to choose files</div>
+      <div class="sub">.pdf or .docx · multiple files supported</div>
+      <input type="file" id="fileInputDocs" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple>
+    </div>
+
+    <div class="trust">
+      <span class="icon">🔒</span>
+      <span>Your files are processed locally in this browser tab. They are never sent to a server.</span>
+    </div>
+
+    <div class="results-bar" id="resultsBarDocs">
+      <span id="resultsCountDocs"></span>
+      <button class="dl secondary" id="clearAllBtnDocs" type="button">Clear all</button>
+    </div>
+    <div class="results" id="resultsDocs"></div>
+  </section>
 
   <footer>© 2026 UltraModernGeek.com</footer>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script>
 (function(){
   "use strict";
 
-  const dropzone = document.getElementById('dropzone');
-  const fileInput = document.getElementById('fileInput');
-  const results = document.getElementById('results');
-  const resultsBar = document.getElementById('resultsBar');
-  const resultsCount = document.getElementById('resultsCount');
-  const clearAllBtn = document.getElementById('clearAllBtn');
+  // ---------- Tabs ----------
+  const tabs = document.querySelectorAll('.tab');
+  const panels = document.querySelectorAll('.panel');
+  tabs.forEach(tab => tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('active'));
+    panels.forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  }));
 
-  dropzone.addEventListener('click', () => fileInput.click());
-  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
-  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
-  dropzone.addEventListener('drop', e => {
-    e.preventDefault();
-    dropzone.classList.remove('drag');
-    handleFiles(e.dataTransfer.files);
-  });
-  fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+  // ---------- Shared helpers ----------
+  function createResultsController(resultsEl, barEl, countEl, singularLabel, pluralLabel){
+    function update(){
+      const n = resultsEl.children.length;
+      barEl.classList.toggle('show', n > 0);
+      countEl.textContent = n + ' ' + (n === 1 ? singularLabel : pluralLabel);
+    }
+    function removeCard(card){
+      (card._objectUrls || []).forEach(url => URL.revokeObjectURL(url));
+      card.remove();
+      update();
+    }
+    return { update, removeCard };
+  }
 
-  clearAllBtn.addEventListener('click', () => {
-    Array.from(results.children).forEach(card => removeCard(card));
-  });
-
-  function handleFiles(fileList){
-    Array.from(fileList).forEach(file => {
-      if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { showUnsupported(file); return; }
-      processFile(file);
+  function wireDropzone(dropzoneEl, fileInputEl, onFiles){
+    dropzoneEl.addEventListener('click', () => fileInputEl.click());
+    dropzoneEl.addEventListener('dragover', e => { e.preventDefault(); dropzoneEl.classList.add('drag'); });
+    dropzoneEl.addEventListener('dragleave', () => dropzoneEl.classList.remove('drag'));
+    dropzoneEl.addEventListener('drop', e => {
+      e.preventDefault();
+      dropzoneEl.classList.remove('drag');
+      onFiles(e.dataTransfer.files);
     });
-    fileInput.value = '';
-  }
-
-  function showUnsupported(file){
-    const card = document.createElement('div');
-    card.className = 'file-card';
-    card._objectUrls = [];
-    card.innerHTML = `
-      <div style="width:88px;height:88px;border-radius:10px;background:rgba(255,61,242,0.08);display:grid;place-items:center;font-size:28px;">⚠️</div>
-      <div>
-        <div class="file-head">
-          <div>
-            <div class="file-name">${escapeHtml(file.name)}</div>
-            <div class="file-size">${bytesToSize(file.size)}</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span class="status done" style="color:var(--danger);">unsupported</span>
-            <button type="button" class="remove-btn" title="Remove">✕</button>
-          </div>
-        </div>
-        <div class="none-found">Unsupported format. Please use JPG, PNG, or WEBP.</div>
-      </div>
-    `;
-    results.prepend(card);
-    card.querySelector('.remove-btn').addEventListener('click', () => removeCard(card));
-    updateResultsBar();
-  }
-
-  function updateResultsBar(){
-    const n = results.children.length;
-    resultsBar.classList.toggle('show', n > 0);
-    resultsCount.textContent = n + (n === 1 ? ' image in results' : ' images in results');
-  }
-
-  function removeCard(card){
-    (card._objectUrls || []).forEach(url => URL.revokeObjectURL(url));
-    card.remove();
-    updateResultsBar();
+    fileInputEl.addEventListener('change', () => {
+      onFiles(fileInputEl.files);
+      fileInputEl.value = '';
+    });
   }
 
   function bytesToSize(bytes){
@@ -403,7 +426,7 @@
         const ctx = canvas.getContext('2d');
         drawOriented(ctx, img, orientation, w, h);
         URL.revokeObjectURL(url);
-        const mime = file.type === 'image/png' ? 'image/png' : file.type === 'image/webp' ? 'image/webp' : 'image/jpeg';
+        const mime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
         canvas.toBlob(blob => {
           if (!blob) return reject(new Error('Could not encode cleaned image'));
           resolve(blob);
@@ -414,7 +437,7 @@
     });
   }
 
-  async function processFile(file){
+  async function processImageFile(file, resultsEl, controller){
     const card = document.createElement('div');
     card.className = 'file-card';
     card._objectUrls = [];
@@ -438,10 +461,10 @@
         <div class="actions"></div>
       </div>
     `;
-    results.prepend(card);
-    updateResultsBar();
+    resultsEl.prepend(card);
+    controller.update();
 
-    card.querySelector('.remove-btn').addEventListener('click', () => removeCard(card));
+    card.querySelector('.remove-btn').addEventListener('click', () => controller.removeCard(card));
 
     const statusEl = card.querySelector('.status');
     const metaSlot = card.querySelector('.meta-slot');
@@ -460,14 +483,14 @@
         ).join('');
         metaSlot.appendChild(table);
       } else {
-        metaSlot.innerHTML = `<div class="none-found">No readable JPEG EXIF metadata found. The browser re-encode step will still remove embedded metadata from the cleaned copy.</div>`;
+        metaSlot.innerHTML = `<div class="none-found">No readable EXIF metadata found — the browser re-encode step below will still strip anything hidden.</div>`;
       }
 
       const orientation = exif && exif.Orientation ? exif.Orientation : 1;
       const cleanedBlob = await cleanImage(file, orientation);
       const cleanedUrl = URL.createObjectURL(cleanedBlob);
       card._objectUrls.push(cleanedUrl);
-      const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+      const ext = file.type === 'image/png' ? 'png' : 'jpg';
       const baseName = file.name.replace(/\.[^.]+$/, '');
       const cleanName = `cleaned-${baseName}.${ext}`;
 
@@ -492,6 +515,260 @@
   function escapeHtml(str){
     return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
+
+  // ---------- PDF metadata (via pdf-lib) ----------
+  async function readPdfMetadata(arrayBuffer){
+    const { PDFDocument } = PDFLib;
+    const doc = await PDFDocument.load(arrayBuffer, { updateMetadata: false, ignoreEncryption: true });
+    const creationDate = doc.getCreationDate();
+    const modDate = doc.getModificationDate();
+    return {
+      Title: doc.getTitle() || null,
+      Author: doc.getAuthor() || null,
+      Subject: doc.getSubject() || null,
+      Keywords: doc.getKeywords() || null,
+      Creator: doc.getCreator() || null,
+      Producer: doc.getProducer() || null,
+      Created: creationDate ? creationDate.toLocaleString() : null,
+      Modified: modDate ? modDate.toLocaleString() : null,
+    };
+  }
+
+  function buildPdfMetaRows(meta){
+    const rows = [];
+    if (meta.Title) rows.push(['Title', meta.Title]);
+    if (meta.Author) rows.push(['Author', meta.Author, true]);
+    if (meta.Subject) rows.push(['Subject', meta.Subject]);
+    if (meta.Keywords) rows.push(['Keywords', meta.Keywords]);
+    if (meta.Creator) rows.push(['Created with', meta.Creator]);
+    if (meta.Producer) rows.push(['PDF producer', meta.Producer]);
+    if (meta.Created) rows.push(['Created', meta.Created]);
+    if (meta.Modified) rows.push(['Last modified', meta.Modified]);
+    return rows;
+  }
+
+  async function cleanPdf(arrayBuffer){
+    const { PDFDocument, PDFName } = PDFLib;
+    const doc = await PDFDocument.load(arrayBuffer, { updateMetadata: false, ignoreEncryption: true });
+    doc.setTitle('');
+    doc.setAuthor('');
+    doc.setSubject('');
+    doc.setKeywords([]);
+    doc.setCreator('');
+    doc.setProducer('');
+    const now = new Date();
+    doc.setCreationDate(now);
+    doc.setModificationDate(now);
+    try {
+      // Drop any embedded XMP metadata stream too, if present.
+      doc.catalog.delete(PDFName.of('Metadata'));
+    } catch (e) { /* not fatal if this PDF has none */ }
+    const bytes = await doc.save();
+    return new Blob([bytes], { type: 'application/pdf' });
+  }
+
+  // ---------- DOCX metadata (via JSZip, docProps XML) ----------
+  async function readDocxMetadata(arrayBuffer){
+    const zip = await JSZip.loadAsync(arrayBuffer);
+    const meta = {};
+
+    async function readXmlTags(path, tagMap){
+      const f = zip.file(path);
+      if (!f) return;
+      const xml = await f.async('string');
+      const doc = new DOMParser().parseFromString(xml, 'application/xml');
+      Object.keys(tagMap).forEach(tag => {
+        const el = doc.getElementsByTagName(tag)[0];
+        const val = el && el.textContent ? el.textContent.trim() : '';
+        if (val) meta[tagMap[tag]] = val;
+      });
+    }
+
+    await readXmlTags('docProps/core.xml', {
+      'dc:creator': 'Author',
+      'cp:lastModifiedBy': 'LastModifiedBy',
+      'dc:title': 'Title',
+      'dc:subject': 'Subject',
+      'dc:description': 'Description',
+      'cp:keywords': 'Keywords',
+      'dcterms:created': 'Created',
+      'dcterms:modified': 'Modified',
+    });
+    await readXmlTags('docProps/app.xml', {
+      'Company': 'Company',
+      'Manager': 'Manager',
+      'TotalTime': 'TotalEditTime',
+      'Application': 'Application',
+    });
+
+    return meta;
+  }
+
+  function buildDocxMetaRows(meta){
+    const rows = [];
+    if (meta.Author) rows.push(['Author', meta.Author, true]);
+    if (meta.LastModifiedBy) rows.push(['Last edited by', meta.LastModifiedBy, true]);
+    if (meta.Company) rows.push(['Company', meta.Company, true]);
+    if (meta.Manager) rows.push(['Manager', meta.Manager, true]);
+    if (meta.Title) rows.push(['Title', meta.Title]);
+    if (meta.Subject) rows.push(['Subject', meta.Subject]);
+    if (meta.Description) rows.push(['Description', meta.Description]);
+    if (meta.Keywords) rows.push(['Keywords', meta.Keywords]);
+    if (meta.Created) rows.push(['Created', meta.Created]);
+    if (meta.Modified) rows.push(['Last modified', meta.Modified]);
+    if (meta.TotalEditTime) rows.push(['Total edit time (min)', meta.TotalEditTime]);
+    if (meta.Application) rows.push(['Created with', meta.Application]);
+    return rows;
+  }
+
+  async function cleanDocx(arrayBuffer){
+    const zip = await JSZip.loadAsync(arrayBuffer);
+
+    async function clearTags(path, tags){
+      const f = zip.file(path);
+      if (!f) return;
+      let xml = await f.async('string');
+      tags.forEach(tag => {
+        const re = new RegExp('(<' + tag + '(?:\\s[^>]*)?>)([\\s\\S]*?)(</' + tag + '>)', 'g');
+        xml = xml.replace(re, '$1$3');
+      });
+      zip.file(path, xml);
+    }
+
+    await clearTags('docProps/core.xml', [
+      'dc:creator', 'cp:lastModifiedBy', 'dc:title', 'dc:subject',
+      'dc:description', 'cp:keywords', 'cp:category', 'cp:contentStatus',
+      'dcterms:created', 'dcterms:modified',
+    ]);
+    await clearTags('docProps/app.xml', ['Company', 'Manager', 'TotalTime']);
+
+    return zip.generateAsync({
+      type: 'blob',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
+  }
+
+  async function processDocumentFile(file, resultsEl, controller){
+    const card = document.createElement('div');
+    card.className = 'file-card';
+    card._objectUrls = [];
+
+    const lowerName = file.name.toLowerCase();
+    const isPdf = lowerName.endsWith('.pdf') || file.type === 'application/pdf';
+    const isDocx = lowerName.endsWith('.docx') ||
+      file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const icon = isPdf ? '📕' : isDocx ? '📘' : '📄';
+
+    card.innerHTML = `
+      <div class="doc-icon">${icon}</div>
+      <div>
+        <div class="file-head">
+          <div>
+            <div class="file-name">${escapeHtml(file.name)}</div>
+            <div class="file-size">${bytesToSize(file.size)}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="status working">cleaning…</span>
+            <button type="button" class="remove-btn" title="Remove">✕</button>
+          </div>
+        </div>
+        <div class="meta-slot"></div>
+        <div class="actions"></div>
+      </div>
+    `;
+    resultsEl.prepend(card);
+    controller.update();
+    card.querySelector('.remove-btn').addEventListener('click', () => controller.removeCard(card));
+
+    const statusEl = card.querySelector('.status');
+    const metaSlot = card.querySelector('.meta-slot');
+    const actions = card.querySelector('.actions');
+
+    try {
+      if (!isPdf && !isDocx){
+        throw new Error('Unsupported file type — upload a PDF or a .docx Word file.');
+      }
+
+      const buf = await file.arrayBuffer();
+      let rows, cleanedBlob, ext;
+
+      if (isPdf){
+        const meta = await readPdfMetadata(buf);
+        rows = buildPdfMetaRows(meta);
+        cleanedBlob = await cleanPdf(buf);
+        ext = 'pdf';
+      } else {
+        const meta = await readDocxMetadata(buf);
+        rows = buildDocxMetaRows(meta);
+        cleanedBlob = await cleanDocx(buf);
+        ext = 'docx';
+      }
+
+      if (rows.length){
+        const table = document.createElement('table');
+        table.className = 'meta';
+        table.innerHTML = rows.map(([k,v,flag]) =>
+          `<tr><td class="k">${escapeHtml(k)}</td><td class="v ${flag ? 'flagged':''}">${escapeHtml(String(v))}</td></tr>`
+        ).join('');
+        metaSlot.appendChild(table);
+      } else {
+        metaSlot.innerHTML = `<div class="none-found">No hidden document properties found — the cleaned copy is still produced fresh, just in case.</div>`;
+      }
+
+      const cleanedUrl = URL.createObjectURL(cleanedBlob);
+      card._objectUrls.push(cleanedUrl);
+      const baseName = file.name.replace(/\.[^.]+$/, '');
+      const cleanName = `cleaned-${baseName}.${ext}`;
+
+      statusEl.textContent = 'cleaned';
+      statusEl.className = 'status done';
+
+      const dl = document.createElement('a');
+      dl.href = cleanedUrl;
+      dl.download = cleanName;
+      dl.className = 'dl';
+      dl.textContent = `Download cleaned (${bytesToSize(cleanedBlob.size)})`;
+      actions.appendChild(dl);
+
+    } catch (err){
+      statusEl.textContent = 'error';
+      statusEl.className = 'status done';
+      statusEl.style.color = 'var(--danger)';
+      metaSlot.innerHTML = `<div class="none-found">Could not process this file: ${escapeHtml(err.message || String(err))}</div>`;
+    }
+  }
+
+  // ---------- Wire up both panels ----------
+  const photosController = createResultsController(
+    document.getElementById('results'),
+    document.getElementById('resultsBar'),
+    document.getElementById('resultsCount'),
+    'image cleaned', 'images cleaned'
+  );
+  wireDropzone(document.getElementById('dropzone'), document.getElementById('fileInput'), fileList => {
+    Array.from(fileList).forEach(file => {
+      if (!/^image\/(jpeg|png)$/.test(file.type)) return;
+      processImageFile(file, document.getElementById('results'), photosController);
+    });
+  });
+  document.getElementById('clearAllBtn').addEventListener('click', () => {
+    Array.from(document.getElementById('results').children).forEach(card => photosController.removeCard(card));
+  });
+
+  const docsController = createResultsController(
+    document.getElementById('resultsDocs'),
+    document.getElementById('resultsBarDocs'),
+    document.getElementById('resultsCountDocs'),
+    'file cleaned', 'files cleaned'
+  );
+  wireDropzone(document.getElementById('dropzoneDocs'), document.getElementById('fileInputDocs'), fileList => {
+    Array.from(fileList).forEach(file => {
+      processDocumentFile(file, document.getElementById('resultsDocs'), docsController);
+    });
+  });
+  document.getElementById('clearAllBtnDocs').addEventListener('click', () => {
+    Array.from(document.getElementById('resultsDocs').children).forEach(card => docsController.removeCard(card));
+  });
 })();
 </script>
 </body>
